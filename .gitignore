@@ -1,0 +1,19 @@
+node_modules/
+dist/
+build/
+
+# Environment files – never commit real credentials
+.env
+.env.local
+.env.production
+backend/.env
+backend/.env.local
+backend/.env.production
+frontend/.env
+frontend/.env.local
+frontend/.env.production
+*.local
+
+.DS_Store
+uploads/
+*.log

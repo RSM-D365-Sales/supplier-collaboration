@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  body {
+    @apply bg-gray-100 text-gray-800 font-sans antialiased;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+}
+
+@layer components {
+  /* Table cell input fields */
+  .price-input {
+    @apply w-full text-right bg-white border border-gray-300 rounded px-2 py-1 text-sm
+           focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500;
+  }
+
+  /* Status toggle button */
+  .status-btn {
+    @apply flex items-center gap-2 px-4 py-1.5 rounded text-sm font-medium transition-all
+           border cursor-pointer select-none;
+  }
+
+  .status-btn-active {
+    @apply bg-brand-700 text-white border-brand-700;
+  }
+
+  .status-btn-inactive {
+    @apply bg-white text-gray-600 border-gray-300 hover:bg-gray-50;
+  }
+
+  /* Tab styles */
+  .tab-active {
+    @apply bg-brand-700 text-white font-semibold;
+  }
+
+  .tab-inactive {
+    @apply bg-gray-100 text-gray-600 border border-gray-300 hover:bg-gray-200;
+  }
+}

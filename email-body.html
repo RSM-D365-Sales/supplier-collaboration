@@ -1,0 +1,208 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Request for Quotation %%RFQCaseNumber%%</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f4f4;font-family:Arial,Helvetica,sans-serif;">
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       Outer wrapper
+  ══════════════════════════════════════════════════════════════════════════ -->
+  <table width="100%" cellpadding="0" cellspacing="0" border="0"
+         style="background-color:#f4f4f4;padding:30px 0;">
+    <tr>
+      <td align="center">
+
+        <!-- ─────────────────────────────────────────────────────────────────
+             Card
+        ────────────────────────────────────────────────────────────────── -->
+        <table width="640" cellpadding="0" cellspacing="0" border="0"
+               style="background-color:#ffffff;border-radius:4px;
+                      box-shadow:0 2px 8px rgba(0,0,0,0.08);overflow:hidden;">
+
+          <!-- ── Header bar ─────────────────────────────────────────────── -->
+          <tr>
+            <td colspan="2"
+                style="background-color:#1a3a5c;padding:18px 30px;
+                       color:#ffffff;font-size:22px;font-weight:bold;
+                       letter-spacing:0.5px;font-family:Arial,Helvetica,sans-serif;">
+              RFQ Response
+            </td>
+          </tr>
+
+          <!-- ── Sub-header: RFQ number + title ───────────────────────────── -->
+          <tr>
+            <td colspan="2"
+                style="background-color:#eef2f8;padding:12px 30px;
+                       border-bottom:1px solid #dce3ee;">
+              <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td style="font-family:Arial,Helvetica,sans-serif;
+                             font-size:13px;color:#1a3a5c;">
+                    <strong>RFQ:</strong>&nbsp;%%RFQCaseNumber%%
+                    &nbsp;&nbsp;|&nbsp;&nbsp;
+                    <strong>%%RFQDescription%%</strong>
+                  </td>
+                  <td align="right"
+                      style="font-family:Arial,Helvetica,sans-serif;
+                             font-size:12px;color:#555555;">
+                    Expires:&nbsp;<strong>%%ExpirationDate%%</strong>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- ── Body: letter (left) + CTA panel (right) ──────────────────── -->
+          <tr>
+
+            <!-- Left: letter body -->
+            <td valign="top"
+                style="padding:30px 24px 30px 30px;color:#333333;
+                       font-size:14px;line-height:1.75;width:400px;
+                       font-family:Arial,Helvetica,sans-serif;">
+
+              <p style="margin:0 0 14px;">
+                Dear <strong>%%VendorName%%</strong>,
+              </p>
+
+              <p style="margin:0 0 14px;">
+                Please press the <strong>CLICK HERE</strong> button on the right
+                to open a new window and respond to our request for quotation.
+              </p>
+
+              <p style="margin:0 0 14px;">
+                Please find attached a copy of RFQ
+                <strong>%%RFQCaseNumber%%</strong>
+                &#8211; <em>%%RFQDescription%%</em>.
+              </p>
+
+              <p style="margin:0 0 14px;">
+                This quotation request expires on
+                <strong>%%ExpirationDate%%</strong>.
+                Please ensure your response is submitted before this date.
+              </p>
+
+              <p style="margin:0 0 28px;">
+                Should you require any further information, please do not
+                hesitate to contact me.
+              </p>
+
+              <p style="margin:0;">Yours Sincerely,</p>
+              <br/>
+              <p style="margin:0;font-weight:bold;font-size:14px;">
+                %%RequesterName%%
+              </p>
+              <p style="margin:2px 0 0;font-size:13px;color:#555555;">
+                %%CompanyName%%
+              </p>
+
+            </td>
+
+            <!-- Right: CTA panel -->
+            <td valign="top" align="center"
+                style="background-color:#eef2f8;padding:34px 20px;
+                       width:200px;border-left:1px solid #dce3ee;">
+
+              <p style="margin:0 0 18px;font-size:12px;font-weight:bold;
+                        color:#1a3a5c;text-transform:uppercase;
+                        letter-spacing:0.8px;font-family:Arial,Helvetica,sans-serif;">
+                View &amp; Respond
+              </p>
+
+              <!-- CTA button -->
+              <table cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center"
+                      style="background-color:#e8722a;border-radius:4px;
+                             padding:15px 24px;">
+                    <a href="%%PortalUrl%%"
+                       style="color:#ffffff;font-size:14px;font-weight:bold;
+                              text-decoration:none;letter-spacing:1.5px;
+                              white-space:nowrap;font-family:Arial,Helvetica,sans-serif;">
+                      CLICK HERE
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:18px 0 0;font-size:11px;color:#777777;
+                        text-align:center;line-height:1.5;
+                        font-family:Arial,Helvetica,sans-serif;">
+                This link is unique<br/>to your account.<br/>Do not share it.
+              </p>
+
+              <!-- Divider -->
+              <table cellpadding="0" cellspacing="0" border="0" width="100%"
+                     style="margin-top:24px;">
+                <tr>
+                  <td style="border-top:1px solid #d0d8e8;font-size:0;">&nbsp;</td>
+                </tr>
+              </table>
+
+              <!-- Ref info -->
+              <p style="margin:16px 0 0;font-size:11px;color:#888888;
+                        text-align:center;line-height:1.6;
+                        font-family:Arial,Helvetica,sans-serif;">
+                Vendor:&nbsp;%%VendorAccountNumber%%<br/>
+                RFQ:&nbsp;%%RFQCaseNumber%%
+              </p>
+
+            </td>
+
+          </tr>
+
+          <!-- ── Divider ─────────────────────────────────────────────────── -->
+          <tr>
+            <td colspan="2" style="padding:0 30px;">
+              <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td style="border-top:1px solid #e0e0e0;font-size:0;">&nbsp;</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- ── Fallback URL section ───────────────────────────────────── -->
+          <tr>
+            <td colspan="2"
+                style="padding:20px 30px 28px;font-size:12px;
+                       color:#555555;font-family:Arial,Helvetica,sans-serif;">
+
+              <p style="margin:0 0 6px;font-weight:bold;font-size:12px;">
+                Button not working?
+              </p>
+              <p style="margin:0 0 6px;line-height:1.6;">
+                Copy and paste the link below into your web browser and press Enter:
+              </p>
+              <p style="margin:0 0 6px;">
+                <a href="%%PortalUrl%%"
+                   style="color:#1a5276;word-break:break-all;font-size:11px;">
+                  %%PortalUrl%%
+                </a>
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- ── Footer ─────────────────────────────────────────────────── -->
+          <tr>
+            <td colspan="2"
+                style="background-color:#1a3a5c;padding:12px 30px;
+                       font-size:11px;color:#8eaac0;
+                       font-family:Arial,Helvetica,sans-serif;">
+              This is an automated message from %%CompanyName%%.
+              Please do not reply directly to this email.
+            </td>
+          </tr>
+
+        </table>
+        <!-- /Card -->
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>

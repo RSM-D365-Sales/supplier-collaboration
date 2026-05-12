@@ -1,0 +1,58 @@
+import 'dotenv/config';
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import path from 'path';
+import fs from 'fs';
+import { rfqRouter } from './routes/rfq';
+import { adminRouter } from './routes/admin';
+
+const app = express();
+const PORT = parseInt(process.env.PORT ?? '3001', 10);
+const FRONTEND_URL = process.env.FRONTEND_URL ?? 'http://localhost:5173';
+
+// ─── Ensure uploads directory exists ─────────────────────────────────────────
+const uploadsDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+// ─── Security & Parsing Middleware ────────────────────────────────────────────
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' }, // allow static file serving
+  })
+);
+app.use(
+  cors({
+    origin: FRONTEND_URL,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
+);
+app.use(express.json({ limit: '1mb' }));
+
+// ─── Routes ──────────────────────────────────────────────────────────────────
+app.use('/api/rfq', rfqRouter);
+app.use('/api/admin', adminRouter);
+
+// Serve uploaded files
+app.use('/uploads', express.static(uploadsDir));
+
+// Health check
+app.get('/health', (_req, res) => {
+  res.json({
+    status: 'ok',
+    mode: process.env.USE_MOCK_DATA === 'true' ? 'demo (mock data)' : 'live (D365)',
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// ─── Start ────────────────────────────────────────────────────────────────────
+app.listen(PORT, () => {
+  const mode = process.env.USE_MOCK_DATA === 'true' ? 'DEMO MODE (mock data)' : 'LIVE MODE (D365)';
+  console.log(`\n🚀  Supplier Portal API running on http://localhost:${PORT}`);
+  console.log(`📋  Mode: ${mode}`);
+  console.log(`\n📎  Demo vendor links (frontend must also be running):`);
+  console.log(`   Flo-Tech        → ${FRONTEND_URL}/rfq/demo-token-flotech-001`);
+  console.log(`   Tech Solutions  → ${FRONTEND_URL}/rfq/demo-token-techsol-002`);
+  console.log(`   Global Supplies → ${FRONTEND_URL}/rfq/demo-token-globsup-003\n`);
+});
