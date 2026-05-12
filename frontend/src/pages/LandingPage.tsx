@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { Link2, Shield, ArrowRight } from 'lucide-react';
 
 // Demo links pre-seeded in the backend
@@ -56,9 +57,9 @@ export default function LandingPage() {
             </div>
             <div className="space-y-2">
               {DEMO_VENDORS.map(({ name, token, color }) => (
-                <a
+                <Link
                   key={token}
-                  href={`/rfq/${token}`}
+                  to={`/rfq/${token}`}
                   className="flex items-center justify-between bg-gray-50 border border-gray-200 hover:border-brand-400 hover:bg-brand-50 rounded-lg px-4 py-3 transition-all group"
                 >
                   <div className="flex items-center gap-3">
@@ -77,7 +78,7 @@ export default function LandingPage() {
                     size={16}
                     className="text-gray-400 group-hover:text-brand-600 transition-colors"
                   />
-                </a>
+                </Link>
               ))}
             </div>
           </div>
