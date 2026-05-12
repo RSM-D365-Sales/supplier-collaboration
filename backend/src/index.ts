@@ -46,6 +46,29 @@ app.get('/health', (_req, res) => {
   });
 });
 
+// ─── Serve built frontend (single-app deployment) ────────────────────────────
+// Frontend is built with Vite base '/supplier-collaboration/', so assets and
+// the SPA live under that path. Adjust FRONTEND_BASE_PATH if you change it.
+const FRONTEND_BASE_PATH = process.env.FRONTEND_BASE_PATH ?? '/supplier-collaboration';
+const frontendDist = path.join(__dirname, '../../frontend/dist');
+
+if (fs.existsSync(frontendDist)) {
+  // Static assets (hashed JS/CSS, images, etc.)
+  app.use(FRONTEND_BASE_PATH, express.static(frontendDist));
+
+  // SPA fallback: any non-API GET under the base path returns index.html
+  app.get(`${FRONTEND_BASE_PATH}/*`, (_req, res) => {
+    res.sendFile(path.join(frontendDist, 'index.html'));
+  });
+
+  // Optional convenience: redirect site root to the SPA
+  app.get('/', (_req, res) => res.redirect(FRONTEND_BASE_PATH + '/'));
+
+  console.log(`🖥️   Serving frontend from ${frontendDist} at ${FRONTEND_BASE_PATH}/`);
+} else {
+  console.warn(`⚠️   Frontend build not found at ${frontendDist} — API only.`);
+}
+
 // ─── Start ────────────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
   const mode = process.env.USE_MOCK_DATA === 'true' ? 'DEMO MODE (mock data)' : 'LIVE MODE (D365)';
