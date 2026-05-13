@@ -199,18 +199,10 @@ export class D365Service {
     );
     const lines: Record<string, unknown>[] = linesRes.data.value;
 
-    // 3. Fetch vendors invited to this RFQ via reply header records
-    const vendorsRes = await this.httpClient!.get(
-      this.odata(
-        `RequestForQuotationReplyHeaders?cross-company=true` +
-        `&$filter=RFQNumber eq '${rfqNumber}'` +
-        `&$select=VendorAccountNumber,VendorName`
-      )
-    );
-    const vendors = (vendorsRes.data.value as Record<string, unknown>[]).map((v) => ({
-      vendorId: String(v['VendorAccountNumber'] ?? ''),
-      vendorName: String(v['VendorName'] ?? ''),
-    }));
+    // Vendor list is not fetched from D365 — the admin adds vendors manually
+    // (reply headers only exist after vendors respond, and D365 doesn't expose
+    //  vendor email addresses via OData)
+    const vendors: Array<{ vendorId: string; vendorName: string }> = [];
 
     const items = lines.map((line) => ({
       itemNumber: Number(line['LineNumber'] ?? 0),
