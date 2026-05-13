@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { RFQPageData, SubmitPayload, Document } from '../types/rfq';
+import { RFQPageData, SubmitPayload, Document, PortalSlot, ConfigureSlotPayload } from '../types/rfq';
 
 // Dev:  VITE_API_URL unset → BASE = '/api' → Vite proxy forwards to localhost:3001
 // Prod: VITE_API_URL='https://portal-api.rsmd365.com' → BASE = absolute URL
@@ -97,70 +97,40 @@ export const api = {
     return data.documents;
   },
 
-  // ── Admin endpoints ────────────────────────────────────────────────────────
+  // ── Admin / Slot endpoints ─────────────────────────────────────────────────
 
-  /**
-   * Trigger token generation + vendor emails for an RFQ number.
-   * Resolves vendor list automatically from D365.
-   */
-  async sendRFQ(rfqNumber: string): Promise<AdminSendResult> {
-    const { data } = await client.post<AdminSendResult>('/admin/rfq-sent', { rfqNumber });
-    return data;
+  /** Get all 5 portal slots. */
+  async getSlots(): Promise<PortalSlot[]> {
+    const { data } = await client.get<{ slots: PortalSlot[] }>('/admin/slots');
+    return data.slots;
   },
 
-  /**
-   * Get all current tokens in the store (across all RFQs).
-   */
-  async getTokens(): Promise<TokenRecord[]> {
-    const { data } = await client.get<{ tokens: TokenRecord[] }>('/admin/tokens');
-    return data.tokens;
+  /** Get a single slot (refreshes response statuses). */
+  async getSlot(slotId: string): Promise<PortalSlot> {
+    const { data } = await client.get<{ slot: PortalSlot }>(`/admin/slots/${slotId}`);
+    return data.slot;
   },
 
-  /**
-   * Get vendor response summary for a specific RFQ.
-   */
-  async getRFQResponses(rfqNumber: string): Promise<VendorResponseSummary[]> {
-    const { data } = await client.get<{ rfqNumber: string; vendors: VendorResponseSummary[] }>(
-      `/admin/rfq/${rfqNumber}/responses`
+  /** Configure a slot with RFQ data + vendors; optionally send emails. */
+  async configureSlot(slotId: string, payload: ConfigureSlotPayload): Promise<PortalSlot> {
+    const { data } = await client.post<{ slot: PortalSlot }>(
+      `/admin/slots/${slotId}/configure`,
+      payload
     );
-    return data.vendors;
+    return data.slot;
+  },
+
+  /** (Re)send invitation emails to all vendors on a configured slot. */
+  async sendSlotEmails(slotId: string): Promise<PortalSlot> {
+    const { data } = await client.post<{ slot: PortalSlot }>(
+      `/admin/slots/${slotId}/send-emails`
+    );
+    return data.slot;
+  },
+
+  /** Reset a slot back to empty. */
+  async resetSlot(slotId: string): Promise<PortalSlot> {
+    const { data } = await client.delete<{ slot: PortalSlot }>(`/admin/slots/${slotId}`);
+    return data.slot;
   },
 };
-
-// ── Admin types ────────────────────────────────────────────────────────────
-
-export interface AdminVendorResult {
-  vendorId: string;
-  vendorName: string;
-  email: string;
-  token: string;
-  portalUrl: string;
-  emailSent: boolean;
-  messageId?: string;
-  previewUrl?: string;
-}
-
-export interface AdminSendResult {
-  rfqNumber: string;
-  vendors: AdminVendorResult[];
-}
-
-export interface TokenRecord {
-  token: string;
-  rfqNumber: string;
-  vendorId: string;
-  vendorName: string;
-  vendorEmail?: string;
-  responseStatus: string;
-  createdAt: string;
-  expiresAt: string;
-  submittedAt?: string;
-}
-
-export interface VendorResponseSummary {
-  vendorId: string;
-  vendorName: string;
-  responseStatus: string;
-  submittedAt?: string;
-  expiresAt: string;
-}

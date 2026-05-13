@@ -72,3 +72,43 @@ export interface Document {
   path: string;
   uploadedAt: string;
 }
+
+// ─── Portal Slot types ────────────────────────────────────────────────────────
+
+export interface SlotVendor {
+  vendorId: string;
+  vendorName: string;
+  email: string;
+  token: string;
+  portalUrl: string;
+  responseStatus: ResponseStatus;
+  emailSent: boolean;
+}
+
+export interface PortalSlot {
+  slotId: string;
+  label: string;
+  status: 'empty' | 'active' | 'closed';
+  rfqNumber?: string;
+  rfqData?: Omit<RFQData, 'vendor'>;
+  vendors: SlotVendor[];
+  updatedAt?: string;
+}
+
+export interface SlotLineItemDraft {
+  itemNumber: number;
+  itemId: string;
+  description: string;
+  quantity: number;
+  unit: string;
+  leadTimeDays: number;
+}
+
+export interface ConfigureSlotPayload {
+  label?: string;
+  rfqNumber: string;
+  rfqData: Omit<RFQData, 'vendor'>;
+  vendors: Array<{ vendorId?: string; vendorName: string; email: string }>;
+  sendEmails?: boolean;
+  expiryDays?: number;
+}

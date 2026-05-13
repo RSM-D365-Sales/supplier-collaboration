@@ -89,3 +89,34 @@ export interface GenerateTokensResponse {
     portalUrl: string;
   }>;
 }
+
+// ─── Portal Slot types ────────────────────────────────────────────────────────
+
+export interface SlotVendor {
+  vendorId: string;
+  vendorName: string;
+  email: string;
+  token: string;
+  portalUrl: string;
+  responseStatus: ResponseStatus;
+  emailSent: boolean;
+}
+
+export interface PortalSlot {
+  slotId: string;          // 'slot-1' … 'slot-5'
+  label: string;           // Human-readable name set by admin
+  status: 'empty' | 'active' | 'closed';
+  rfqNumber?: string;
+  rfqData?: Omit<RFQData, 'vendor'>;
+  vendors: SlotVendor[];
+  updatedAt?: string;
+}
+
+export interface ConfigureSlotRequest {
+  label?: string;
+  rfqNumber: string;
+  rfqData: Omit<RFQData, 'vendor'>;
+  vendors: Array<{ vendorId?: string; vendorName: string; email: string }>;
+  sendEmails?: boolean;
+  expiryDays?: number;
+}
