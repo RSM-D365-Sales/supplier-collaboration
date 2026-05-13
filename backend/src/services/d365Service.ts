@@ -310,9 +310,14 @@ export class D365Service {
       console.warn(`[D365] Could not PATCH reply header for RFQ ${rfqNumber} vendor ${vendorId} — may not exist yet`);
     }
 
-    // 2. PATCH each reply line with the vendor's price
-    // RequestForQuotationReplyLines key: dataAreaId + RFQNumber + VendorAccountNumber + LineNumber
+    // 2. PATCH each reply line with the vendor's price.
+    // Rejected lines are skipped — the vendor has indicated they cannot supply
+    // that item, so we leave the existing D365 record untouched.
     for (const line of lineResponses) {
+      if (line.rejected) {
+        console.log(`[D365] Skipping rejected line ${line.itemNumber} for RFQ ${rfqNumber}`);
+        continue;
+      }
       try {
         await this.httpClient!.patch(
           this.odata(

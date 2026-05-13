@@ -60,7 +60,14 @@ router.get('/:token', validateToken, async (req: Request, res: Response) => {
       rfq.items = rfq.items.map((item) => {
         const savedItem = saved.items.find((i) => i.itemId === item.itemId);
         return savedItem
-          ? { ...item, leadTimeDays: savedItem.leadTimeDays, quotedUnitPrice: savedItem.quotedUnitPrice, extendedPrice: savedItem.extendedPrice }
+          ? {
+              ...item,
+              leadTimeDays: savedItem.leadTimeDays,
+              quotedUnitPrice: savedItem.quotedUnitPrice,
+              extendedPrice: savedItem.extendedPrice,
+              notes: savedItem.notes ?? item.notes,
+              rejected: savedItem.rejected ?? false,
+            }
           : item;
       });
     }
@@ -99,11 +106,13 @@ router.post('/:token/respond', validateToken, async (req: Request, res: Response
     return;
   }
 
-  // Recalculate extended prices server-side to prevent manipulation
+  // Preserve the client-computed extendedPrice (frontend multiplied unitPrice × quantity).
+  // We keep the value as-is; D365 will recompute on its side from price × qty.
+  // Rejected lines come through with their flag intact — submitVendorReply skips patching them.
   if (payload.items) {
     payload.items = payload.items.map((item) => ({
       ...item,
-      extendedPrice: parseFloat((item.quotedUnitPrice * 0).toFixed(2)), // qty not in payload; D365 holds it
+      extendedPrice: item.rejected ? 0 : parseFloat((item.extendedPrice ?? 0).toFixed(2)),
     }));
   }
 

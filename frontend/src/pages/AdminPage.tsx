@@ -78,10 +78,7 @@ function SlotCard({ slot, onUpdate }: SlotCardProps) {
     slot.vendors.map((v) => ({ vendorId: v.vendorId ?? '', vendorName: v.vendorName, email: v.email }))
   );
   const [items, setItems] = useState<RFQLineItem[]>(rfqData.items ?? []);
-  const [sendEmails, setSendEmails] = useState(false);
-
   const [saving, setSaving] = useState(false);
-  const [sendingEmails, setSendingEmails] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [lookingUp, setLookingUp] = useState(false);
   const [lookingUpVendorIdx, setLookingUpVendorIdx] = useState<number | null>(null);
@@ -95,7 +92,6 @@ function SlotCard({ slot, onUpdate }: SlotCardProps) {
     setRfqData(rd);
     setItems(rd.items ?? []);
     setVendors(slot.vendors.map((v) => ({ vendorId: v.vendorId ?? '', vendorName: v.vendorName, email: v.email })));
-    setSendEmails(false);
     setError(null);
     setConfiguring(true);
     setExpanded(true);
@@ -129,7 +125,7 @@ function SlotCard({ slot, onUpdate }: SlotCardProps) {
         rfqNumber: rfqNumber.trim(),
         rfqData: { ...rfqData, rfqNumber: rfqNumber.trim(), items },
         vendors,
-        sendEmails,
+        sendEmails: false,
       };
       const updated = await api.configureSlot(slot.slotId, payload);
       onUpdate(updated);
@@ -139,20 +135,6 @@ function SlotCard({ slot, onUpdate }: SlotCardProps) {
       setError(ax.response?.data?.error ?? (e instanceof Error ? e.message : 'Save failed'));
     } finally {
       setSaving(false);
-    }
-  }
-
-  async function handleSendEmails() {
-    setSendingEmails(true);
-    setError(null);
-    try {
-      const updated = await api.sendSlotEmails(slot.slotId);
-      onUpdate(updated);
-    } catch (e: unknown) {
-      const ax = e as { response?: { data?: { error?: string } } };
-      setError(ax.response?.data?.error ?? 'Email send failed');
-    } finally {
-      setSendingEmails(false);
     }
   }
 
@@ -244,18 +226,12 @@ function SlotCard({ slot, onUpdate }: SlotCardProps) {
         <div className="border-t border-gray-200 px-5 py-4 space-y-3 bg-white">
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Vendor Responses</p>
-            <button
-              onClick={handleSendEmails}
-              disabled={sendingEmails}
-              className="flex items-center gap-1.5 text-xs text-brand-600 hover:text-brand-800 font-medium disabled:opacity-50"
-            >
-              {sendingEmails ? <Loader size={12} className="animate-spin" /> : <Mail size={12} />}
-              Resend Emails
-            </button>
           </div>
           <div className="divide-y divide-gray-100 rounded-lg border border-gray-200 overflow-hidden text-sm">
               {slot.vendors.map((v: SlotVendor) => {
                 const vendorUrl = `${window.location.origin}${import.meta.env.BASE_URL}rfq/${v.token}`;
+                const apiBase = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api';
+                const emailPreviewUrl = `${apiBase}/admin/email-preview/${v.token}`;
                 return (
                   <div key={v.token} className="flex items-center justify-between px-4 py-2.5 bg-white hover:bg-gray-50">
                     <div>
@@ -267,6 +243,16 @@ function SlotCard({ slot, onUpdate }: SlotCardProps) {
                         <StatusIcon status={v.responseStatus} />
                         {v.responseStatus}
                       </span>
+                      <a
+                        href={emailPreviewUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        title="Preview invitation email"
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-md bg-amber-50 text-amber-700 border border-amber-300 hover:bg-amber-100 transition-colors"
+                      >
+                        <Mail size={12} /> Email
+                      </a>
                       <a
                         href={vendorUrl}
                         target="_blank"
@@ -461,13 +447,6 @@ function SlotCard({ slot, onUpdate }: SlotCardProps) {
                 </div>
               )}
           </div>
-
-          {/* Send emails toggle */}
-          <label className="flex items-center gap-2 cursor-pointer select-none">
-            <input type="checkbox" checked={sendEmails} onChange={(e) => setSendEmails(e.target.checked)}
-              className="rounded border-gray-300 text-brand-600 focus:ring-brand-500" />
-            <span className="text-sm text-gray-700">Send invitation emails to vendors now</span>
-          </label>
 
           {error && (
             <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">

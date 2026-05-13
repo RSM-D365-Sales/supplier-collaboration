@@ -86,6 +86,7 @@ export default function RFQPage() {
             quotedUnitPrice: item.quotedUnitPrice,
             extendedPrice: item.extendedPrice,
             notes: item.notes ?? '',
+            rejected: item.rejected ?? false,
           }))
         );
       } catch (err: unknown) {
@@ -104,7 +105,7 @@ export default function RFQPage() {
 
   // ── Draft line item update ─────────────────────────────────────────────────
   const handleDraftChange = useCallback(
-    (index: number, field: keyof LineItemDraft, value: number | string) => {
+    (index: number, field: keyof LineItemDraft, value: number | string | boolean) => {
       setDrafts((prev) => {
         const next = [...prev];
         next[index] = { ...next[index], [field]: value };

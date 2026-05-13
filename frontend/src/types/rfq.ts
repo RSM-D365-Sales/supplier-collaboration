@@ -19,6 +19,7 @@ export interface RFQLineItem {
   quotedUnitPrice: number;
   extendedPrice: number;
   notes?: string;
+  rejected?: boolean;
 }
 
 export interface RFQData {
@@ -57,6 +58,7 @@ export interface LineItemDraft {
   quotedUnitPrice: number;
   extendedPrice: number;
   notes: string;
+  rejected: boolean;
 }
 
 export interface SubmitPayload {

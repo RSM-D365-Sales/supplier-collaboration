@@ -42,6 +42,7 @@ export interface LineItemResponse {
   quotedUnitPrice: number;
   extendedPrice: number;
   notes?: string;
+  rejected?: boolean;
 }
 
 export interface VendorResponsePayload {
