@@ -1,5 +1,19 @@
 # Supplier Collaboration Portal
 
+## Production URLs (portal.rsmd365.com)
+
+- Admin console:   https://portal.rsmd365.com/supplier-collaboration/admin
+- Landing page:    https://portal.rsmd365.com/supplier-collaboration/
+- Vendor portal:   https://portal.rsmd365.com/rfq/TOKEN (token from admin slot)
+- Health check:    https://portal.rsmd365.com/health
+
+## Direct Azure URL (bypasses DNS, always works)
+
+- Admin console:   https://supplier-portal-wa-g9ccf7d7hwfdd3g0.canadacentral-01.azurewebsites.net/supplier-collaboration/admin
+- Health check:    https://supplier-portal-wa-g9ccf7d7hwfdd3g0.canadacentral-01.azurewebsites.net/health
+
+---
+
 A vendor-facing RFQ (Request for Quotation) response portal that integrates with **Microsoft Dynamics 365 Finance & Supply Chain**. Each vendor receives a unique, secure token-based link to view and respond to their specific RFQ — no login required, designed for software demonstration.
 
 ---
