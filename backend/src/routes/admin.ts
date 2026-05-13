@@ -79,6 +79,24 @@ router.delete('/slots/:slotId', (req: Request, res: Response) => {
 });
 
 /**
+ * GET /api/admin/vendor-lookup/:vendorId
+ * Queries D365 Vendors entity for name and primary email by account number.
+ */
+router.get('/vendor-lookup/:vendorId', async (req: Request, res: Response) => {
+  const { vendorId } = req.params;
+  if (!/^[A-Za-z0-9\-_.]+$/.test(vendorId)) {
+    res.status(400).json({ error: 'Invalid vendor ID format.' });
+    return;
+  }
+  try {
+    const result = await d365Service.lookupVendor(vendorId);
+    res.json(result);
+  } catch (err: unknown) {
+    res.status(404).json({ error: (err as Error).message });
+  }
+});
+
+/**
  * GET /api/admin/rfq-lookup/:rfqNumber
  * Queries D365 for the RFQ header, line items, and invited vendors.
  * Returns data suitable for pre-filling the admin configure form.

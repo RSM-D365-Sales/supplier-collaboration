@@ -106,7 +106,13 @@ export interface SlotLineItemDraft {
 
 export interface RFQLookupResult {
   rfqData: Omit<RFQData, 'vendor'>;
-  vendors: Array<{ vendorId: string; vendorName: string }>;
+  vendors: Array<{ vendorId: string; vendorName: string; email: string }>;
+}
+
+export interface VendorLookupResult {
+  vendorId: string;
+  vendorName: string;
+  email: string;
 }
 
 export interface ConfigureSlotPayload {

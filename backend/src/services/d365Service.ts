@@ -160,21 +160,45 @@ export class D365Service {
   }
 
   /**
+   * Look up a single vendor by account number.
+   * Returns vendorId, name, and primary email.
+   */
+  async lookupVendor(vendorId: string): Promise<{ vendorId: string; vendorName: string; email: string }> {
+    if (this.useMock) {
+      return { vendorId, vendorName: `Vendor ${vendorId}`, email: '' };
+    }
+    const res = await this.httpClient!.get(
+      this.odata(
+        `Vendors?cross-company=true` +
+        `&$filter=VendorAccountNumber eq '${vendorId}'` +
+        `&$select=VendorAccountNumber,VendorName,PrimaryEmailAddress&$top=1`
+      )
+    );
+    const v = res.data.value[0];
+    if (!v) throw new Error(`Vendor ${vendorId} not found in D365`);
+    return {
+      vendorId: String(v['VendorAccountNumber'] ?? vendorId),
+      vendorName: String(v['VendorName'] ?? vendorId),
+      email: String(v['PrimaryEmailAddress'] ?? ''),
+    };
+  }
+
+  /**
    * Look up an RFQ by number for the admin configure form.
    * Returns the RFQ header, line items, and list of invited vendors.
    * In mock mode returns demo data so the form can be tested without D365.
    */
   async lookupRFQForAdmin(rfqNumber: string): Promise<{
     rfqData: Omit<RFQData, 'vendor'>;
-    vendors: Array<{ vendorId: string; vendorName: string }>;
+    vendors: Array<{ vendorId: string; vendorName: string; email: string }>;
   }> {
     if (this.useMock) {
       return {
         rfqData: { ...MOCK_RFQ, rfqNumber },
         vendors: [
-          { vendorId: 'V-001', vendorName: 'Flo-Tech Solutions' },
-          { vendorId: 'V-002', vendorName: 'Tech Supplies Inc' },
-          { vendorId: 'V-003', vendorName: 'Global Components' },
+          { vendorId: 'V-001', vendorName: 'Flo-Tech Solutions', email: '' },
+          { vendorId: 'V-002', vendorName: 'Tech Supplies Inc', email: '' },
+          { vendorId: 'V-003', vendorName: 'Global Components', email: '' },
         ],
       };
     }
@@ -199,10 +223,27 @@ export class D365Service {
     );
     const lines: Record<string, unknown>[] = linesRes.data.value;
 
-    // Vendor list is not fetched from D365 — the admin adds vendors manually
-    // (reply headers only exist after vendors respond, and D365 doesn't expose
-    //  vendor email addresses via OData)
-    const vendors: Array<{ vendorId: string; vendorName: string }> = [];
+    // Try to get vendor account numbers from reply headers (may be empty if
+    // no vendors have been invited/responded yet). Then look each one up.
+    let vendors: Array<{ vendorId: string; vendorName: string; email: string }> = [];
+    try {
+      const replyHeadersRes = await this.httpClient!.get(
+        this.odata(
+          `RequestForQuotationReplyHeaders?cross-company=true` +
+          `&$filter=RFQNumber eq '${rfqNumber}'` +
+          `&$select=VendorAccountNumber&$top=20`
+        )
+      );
+      const vendorIds = (replyHeadersRes.data.value as Record<string, unknown>[]).map(
+        (v) => String(v['VendorAccountNumber'])
+      ).filter(Boolean);
+
+      for (const vid of vendorIds) {
+        try {
+          vendors.push(await this.lookupVendor(vid));
+        } catch { /* skip vendors that can't be resolved */ }
+      }
+    } catch { /* reply headers may not exist yet — admin will add vendors manually */ }
 
     const items = lines.map((line) => ({
       itemNumber: Number(line['LineNumber'] ?? 0),

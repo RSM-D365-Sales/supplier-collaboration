@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { RFQPageData, SubmitPayload, Document, PortalSlot, ConfigureSlotPayload, RFQLookupResult } from '../types/rfq';
+import { RFQPageData, SubmitPayload, Document, PortalSlot, ConfigureSlotPayload, RFQLookupResult, VendorLookupResult } from '../types/rfq';
 
 // Dev:  VITE_API_URL unset → BASE = '/api' → Vite proxy forwards to localhost:3001
 // Prod: VITE_API_URL='https://portal-api.rsmd365.com' → BASE = absolute URL
@@ -138,6 +138,14 @@ export const api = {
   async lookupRFQ(rfqNumber: string): Promise<RFQLookupResult> {
     const { data } = await client.get<RFQLookupResult>(
       `/admin/rfq-lookup/${encodeURIComponent(rfqNumber)}`
+    );
+    return data;
+  },
+
+  /** Look up a vendor in D365 by account number — returns name and primary email. */
+  async lookupVendor(vendorId: string): Promise<VendorLookupResult> {
+    const { data } = await client.get<VendorLookupResult>(
+      `/admin/vendor-lookup/${encodeURIComponent(vendorId)}`
     );
     return data;
   },

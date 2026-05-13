@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   CheckCircle2, XCircle, Clock, ExternalLink, Mail, AlertCircle,
   Loader, Plus, Trash2, ChevronDown, ChevronUp, Send, RefreshCw,
-  Settings, RotateCcw, Search,
+  Settings, RotateCcw, Search, UserSearch,
 } from 'lucide-react';
 import { api } from '../services/api';
 import {
@@ -73,8 +73,9 @@ function SlotCard({ slot, onUpdate }: SlotCardProps) {
   const [label, setLabel] = useState(slot.label);
   const [rfqNumber, setRfqNumber] = useState(slot.rfqNumber ?? '');
   const [rfqData, setRfqData] = useState(slot.rfqData ?? blankRfqData());
-  const [vendors, setVendors] = useState<Array<{ vendorName: string; email: string }>>(
-    slot.vendors.map((v) => ({ vendorName: v.vendorName, email: v.email }))
+  const [vendors, setVendors] = useState<Array<{ vendorId: string; vendorName: string; email: string }>>(
+
+    slot.vendors.map((v) => ({ vendorId: v.vendorId ?? '', vendorName: v.vendorName, email: v.email }))
   );
   const [items, setItems] = useState<RFQLineItem[]>(rfqData.items ?? []);
   const [sendEmails, setSendEmails] = useState(false);
@@ -83,6 +84,7 @@ function SlotCard({ slot, onUpdate }: SlotCardProps) {
   const [sendingEmails, setSendingEmails] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [lookingUp, setLookingUp] = useState(false);
+  const [lookingUpVendorIdx, setLookingUpVendorIdx] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const openConfigure = () => {
@@ -92,7 +94,7 @@ function SlotCard({ slot, onUpdate }: SlotCardProps) {
     const rd = slot.rfqData ?? blankRfqData();
     setRfqData(rd);
     setItems(rd.items ?? []);
-    setVendors(slot.vendors.map((v) => ({ vendorName: v.vendorName, email: v.email })));
+    setVendors(slot.vendors.map((v) => ({ vendorId: v.vendorId ?? '', vendorName: v.vendorName, email: v.email })));
     setSendEmails(false);
     setError(null);
     setConfiguring(true);
@@ -107,7 +109,7 @@ function SlotCard({ slot, onUpdate }: SlotCardProps) {
       const result = await api.lookupRFQ(rfqNumber.trim());
       setRfqData({ ...result.rfqData, rfqNumber: rfqNumber.trim() });
       setItems(result.rfqData.items);
-      setVendors(result.vendors.map((v) => ({ vendorName: v.vendorName, email: '' })));
+      setVendors(result.vendors.map((v) => ({ vendorId: v.vendorId, vendorName: v.vendorName, email: v.email })));
     } catch (e: unknown) {
       const ax = e as { response?: { data?: { error?: string } } };
       setError(ax.response?.data?.error ?? 'RFQ not found in D365');
@@ -176,10 +178,26 @@ function SlotCard({ slot, onUpdate }: SlotCardProps) {
     setItems((prev) => prev.map((it, idx) => idx === i ? { ...it, [field]: value } : it));
 
   // vendor helpers
-  const addVendor = () => setVendors((prev) => [...prev, { vendorName: '', email: '' }]);
+  const addVendor = () => setVendors((prev) => [...prev, { vendorId: '', vendorName: '', email: '' }]);
   const removeVendor = (i: number) => setVendors((prev) => prev.filter((_, idx) => idx !== i));
-  const updateVendor = (i: number, field: 'vendorName' | 'email', value: string) =>
+  const updateVendor = (i: number, field: 'vendorId' | 'vendorName' | 'email', value: string) =>
     setVendors((prev) => prev.map((v, idx) => idx === i ? { ...v, [field]: value } : v));
+
+  async function handleVendorLookup(i: number) {
+    const vid = vendors[i].vendorId.trim();
+    if (!vid) return;
+    setLookingUpVendorIdx(i);
+    try {
+      const result = await api.lookupVendor(vid);
+      setVendors((prev) => prev.map((v, idx) => idx === i
+        ? { vendorId: result.vendorId, vendorName: result.vendorName, email: result.email || v.email }
+        : v));
+    } catch {
+      setError(`Vendor "${vid}" not found in D365`);
+    } finally {
+      setLookingUpVendorIdx(null);
+    }
+  }
 
   return (
     <div className={`border-2 rounded-xl overflow-hidden transition-colors ${slotStatusColor(slot)}`}>
@@ -405,13 +423,29 @@ function SlotCard({ slot, onUpdate }: SlotCardProps) {
                 <div className="space-y-2">
                   {vendors.map((v, i) => (
                     <div key={i} className="grid grid-cols-12 gap-2 items-end">
-                      <div className="col-span-5">
+                      <div className="col-span-3">
+                        <label className="block text-[10px] text-gray-400 mb-0.5">D365 Vendor ID</label>
+                        <div className="flex gap-1">
+                          <input value={v.vendorId} onChange={(e) => updateVendor(i, 'vendorId', e.target.value)}
+                            placeholder="e.g. US-001"
+                            className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-brand-500" />
+                          <button
+                            onClick={() => handleVendorLookup(i)}
+                            disabled={!v.vendorId.trim() || lookingUpVendorIdx === i}
+                            title="Lookup vendor in D365"
+                            className="shrink-0 flex items-center justify-center w-8 h-8 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-300 rounded-lg disabled:opacity-40"
+                          >
+                            {lookingUpVendorIdx === i ? <Loader size={12} className="animate-spin" /> : <UserSearch size={12} />}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="col-span-4">
                         <label className="block text-[10px] text-gray-400 mb-0.5">Vendor Name</label>
                         <input value={v.vendorName} onChange={(e) => updateVendor(i, 'vendorName', e.target.value)}
                           placeholder="Acme Corp"
                           className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
                       </div>
-                      <div className="col-span-6">
+                      <div className="col-span-4">
                         <label className="block text-[10px] text-gray-400 mb-0.5">Email</label>
                         <input type="email" value={v.email} onChange={(e) => updateVendor(i, 'email', e.target.value)}
                           placeholder="quotes@vendor.com"
