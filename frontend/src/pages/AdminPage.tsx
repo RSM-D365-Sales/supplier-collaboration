@@ -496,7 +496,11 @@ export default function AdminPage() {
     }
   }, []);
 
-  useEffect(() => { loadSlots(); }, [loadSlots]);
+  useEffect(() => {
+    loadSlots();
+    const interval = setInterval(loadSlots, 30_000);
+    return () => clearInterval(interval);
+  }, [loadSlots]);
 
   function handleSlotUpdate(updated: PortalSlot) {
     setSlots((prev) => prev.map((s) => s.slotId === updated.slotId ? updated : s));

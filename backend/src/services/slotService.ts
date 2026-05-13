@@ -20,6 +20,15 @@ for (let i = 1; i <= MAX_SLOTS; i++) {
 
 export const slotService = {
   getAll(): PortalSlot[] {
+    // Sync response statuses from token store before returning
+    for (const slot of slots.values()) {
+      if (slot.status === 'active') {
+        for (const v of slot.vendors) {
+          const record = tokenService.findToken(v.token);
+          if (record) v.responseStatus = record.responseStatus;
+        }
+      }
+    }
     return Array.from(slots.values());
   },
 
