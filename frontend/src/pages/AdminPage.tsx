@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   CheckCircle2, XCircle, Clock, ExternalLink, Mail, AlertCircle,
   Loader, Plus, Trash2, ChevronDown, ChevronUp, Send, RefreshCw,
-  Settings, RotateCcw,
+  Settings, RotateCcw, Search,
 } from 'lucide-react';
 import { api } from '../services/api';
 import {
@@ -82,6 +82,7 @@ function SlotCard({ slot, onUpdate }: SlotCardProps) {
   const [saving, setSaving] = useState(false);
   const [sendingEmails, setSendingEmails] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [lookingUp, setLookingUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const openConfigure = () => {
@@ -97,6 +98,23 @@ function SlotCard({ slot, onUpdate }: SlotCardProps) {
     setConfiguring(true);
     setExpanded(true);
   };
+
+  async function handleLookup() {
+    if (!rfqNumber.trim()) { setError('Enter an RFQ Number first'); return; }
+    setLookingUp(true);
+    setError(null);
+    try {
+      const result = await api.lookupRFQ(rfqNumber.trim());
+      setRfqData({ ...result.rfqData, rfqNumber: rfqNumber.trim() });
+      setItems(result.rfqData.items);
+      setVendors(result.vendors.map((v) => ({ vendorName: v.vendorName, email: '' })));
+    } catch (e: unknown) {
+      const ax = e as { response?: { data?: { error?: string } } };
+      setError(ax.response?.data?.error ?? 'RFQ not found in D365');
+    } finally {
+      setLookingUp(false);
+    }
+  }
 
   async function handleSave() {
     if (!rfqNumber.trim()) { setError('RFQ Number is required'); return; }
@@ -218,30 +236,33 @@ function SlotCard({ slot, onUpdate }: SlotCardProps) {
             </button>
           </div>
           <div className="divide-y divide-gray-100 rounded-lg border border-gray-200 overflow-hidden text-sm">
-            {slot.vendors.map((v: SlotVendor) => (
-              <div key={v.token} className="flex items-center justify-between px-4 py-2.5 bg-white hover:bg-gray-50">
-                <div>
-                  <p className="font-medium text-gray-800">{v.vendorName}</p>
-                  <p className="text-xs text-gray-400">{v.email}</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className={`flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${statusBadge(v.responseStatus)}`}>
-                    <StatusIcon status={v.responseStatus} />
-                    {v.responseStatus}
-                  </span>
-                  <a
-                    href={v.portalUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-brand-600 hover:text-brand-800"
-                    title="Open vendor portal"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <ExternalLink size={14} />
-                  </a>
-                </div>
-              </div>
-            ))}
+              {slot.vendors.map((v: SlotVendor) => {
+                const vendorUrl = `${window.location.origin}${import.meta.env.BASE_URL}rfq/${v.token}`;
+                return (
+                  <div key={v.token} className="flex items-center justify-between px-4 py-2.5 bg-white hover:bg-gray-50">
+                    <div>
+                      <p className="font-medium text-gray-800">{v.vendorName}</p>
+                      <p className="text-xs text-gray-400">{v.email}</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className={`flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${statusBadge(v.responseStatus)}`}>
+                        <StatusIcon status={v.responseStatus} />
+                        {v.responseStatus}
+                      </span>
+                      <a
+                        href={vendorUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-brand-600 hover:text-brand-800"
+                        title={vendorUrl}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <ExternalLink size={14} />
+                      </a>
+                    </div>
+                  </div>
+                );
+              })}
           </div>
           {error && <p className="text-xs text-red-600 flex items-center gap-1"><AlertCircle size={13} />{error}</p>}
         </div>
@@ -260,9 +281,19 @@ function SlotCard({ slot, onUpdate }: SlotCardProps) {
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">RFQ Number <span className="text-red-500">*</span></label>
-              <input value={rfqNumber} onChange={(e) => setRfqNumber(e.target.value)}
-                placeholder="e.g. 000460"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-brand-500" />
+              <div className="flex gap-2">
+                <input value={rfqNumber} onChange={(e) => setRfqNumber(e.target.value)}
+                  placeholder="e.g. 000460"
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-brand-500" />
+                <button
+                  onClick={handleLookup}
+                  disabled={lookingUp || !rfqNumber.trim()}
+                  className="flex items-center gap-1.5 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-300 px-3 py-2 rounded-lg font-medium disabled:opacity-50 whitespace-nowrap"
+                >
+                  {lookingUp ? <Loader size={13} className="animate-spin" /> : <Search size={13} />}
+                  {lookingUp ? 'Looking up…' : 'Fetch from D365'}
+                </button>
+              </div>
             </div>
           </div>
 

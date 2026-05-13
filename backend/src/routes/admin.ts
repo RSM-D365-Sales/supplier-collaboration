@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { tokenService } from '../services/tokenService';
 import { emailService } from '../services/emailService';
 import { slotService } from '../services/slotService';
+import { d365Service } from '../services/d365Service';
 import { ConfigureSlotRequest } from '../types';
 
 const router = Router();
@@ -74,6 +75,26 @@ router.delete('/slots/:slotId', (req: Request, res: Response) => {
     res.json({ slot });
   } catch (err: unknown) {
     res.status(400).json({ error: (err as Error).message });
+  }
+});
+
+/**
+ * GET /api/admin/rfq-lookup/:rfqNumber
+ * Queries D365 for the RFQ header, line items, and invited vendors.
+ * Returns data suitable for pre-filling the admin configure form.
+ */
+router.get('/rfq-lookup/:rfqNumber', async (req: Request, res: Response) => {
+  const { rfqNumber } = req.params;
+  // Validate: only allow safe characters to prevent OData injection
+  if (!/^[A-Za-z0-9\-_.]+$/.test(rfqNumber)) {
+    res.status(400).json({ error: 'Invalid RFQ number format.' });
+    return;
+  }
+  try {
+    const result = await d365Service.lookupRFQForAdmin(rfqNumber);
+    res.json(result);
+  } catch (err: unknown) {
+    res.status(404).json({ error: (err as Error).message });
   }
 });
 

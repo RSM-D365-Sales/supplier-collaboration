@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { RFQPageData, SubmitPayload, Document, PortalSlot, ConfigureSlotPayload } from '../types/rfq';
+import { RFQPageData, SubmitPayload, Document, PortalSlot, ConfigureSlotPayload, RFQLookupResult } from '../types/rfq';
 
 // Dev:  VITE_API_URL unset → BASE = '/api' → Vite proxy forwards to localhost:3001
 // Prod: VITE_API_URL='https://portal-api.rsmd365.com' → BASE = absolute URL
@@ -132,5 +132,13 @@ export const api = {
   async resetSlot(slotId: string): Promise<PortalSlot> {
     const { data } = await client.delete<{ slot: PortalSlot }>(`/admin/slots/${slotId}`);
     return data.slot;
+  },
+
+  /** Look up an RFQ in D365 by number — returns header, lines, and vendor list. */
+  async lookupRFQ(rfqNumber: string): Promise<RFQLookupResult> {
+    const { data } = await client.get<RFQLookupResult>(
+      `/admin/rfq-lookup/${encodeURIComponent(rfqNumber)}`
+    );
+    return data;
   },
 };

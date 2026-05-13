@@ -160,6 +160,91 @@ export class D365Service {
   }
 
   /**
+   * Look up an RFQ by number for the admin configure form.
+   * Returns the RFQ header, line items, and list of invited vendors.
+   * In mock mode returns demo data so the form can be tested without D365.
+   */
+  async lookupRFQForAdmin(rfqNumber: string): Promise<{
+    rfqData: Omit<RFQData, 'vendor'>;
+    vendors: Array<{ vendorId: string; vendorName: string }>;
+  }> {
+    if (this.useMock) {
+      return {
+        rfqData: { ...MOCK_RFQ, rfqNumber },
+        vendors: [
+          { vendorId: 'V-001', vendorName: 'Flo-Tech Solutions' },
+          { vendorId: 'V-002', vendorName: 'Tech Supplies Inc' },
+          { vendorId: 'V-003', vendorName: 'Global Components' },
+        ],
+      };
+    }
+
+    // 1. Fetch RFQ header
+    const headerRes = await this.httpClient!.get(
+      this.odata(
+        `PublishedRequestForQuotationHeaders?cross-company=true` +
+        `&$filter=RFQCaseNumber eq '${rfqNumber}'`
+      )
+    );
+    const header = headerRes.data.value[0];
+    if (!header) throw new Error(`RFQ ${rfqNumber} not found in D365 (not published or wrong number)`);
+
+    // 2. Fetch RFQ lines
+    const linesRes = await this.httpClient!.get(
+      this.odata(
+        `PublishedRequestForQuotationLines?cross-company=true` +
+        `&$filter=PublishedRFQCaseNumber eq '${rfqNumber}'` +
+        `&$orderby=LineNumber asc`
+      )
+    );
+    const lines: Record<string, unknown>[] = linesRes.data.value;
+
+    // 3. Fetch vendors invited to this RFQ via reply header records
+    const vendorsRes = await this.httpClient!.get(
+      this.odata(
+        `RequestForQuotationReplyHeaders?cross-company=true` +
+        `&$filter=RFQNumber eq '${rfqNumber}'` +
+        `&$select=VendorAccountNumber,VendorName`
+      )
+    );
+    const vendors = (vendorsRes.data.value as Record<string, unknown>[]).map((v) => ({
+      vendorId: String(v['VendorAccountNumber'] ?? ''),
+      vendorName: String(v['VendorName'] ?? ''),
+    }));
+
+    const items = lines.map((line) => ({
+      itemNumber: Number(line['LineNumber'] ?? 0),
+      itemId: String(line['ItemNumber'] ?? line['ExternalItemNumber'] ?? ''),
+      description: String(line['ProductName'] ?? line['ExternalItemNumber'] ?? ''),
+      quantity: Number(line['PurchaseQuantity'] ?? 0),
+      unit: String(line['PurchaseUnitSymbol'] ?? 'ea'),
+      leadTimeDays: 0,
+      quotedUnitPrice: 0,
+      extendedPrice: 0,
+    }));
+
+    const expiryRaw = String(header['RFQExpirationDateTime'] ?? '');
+    const deliveryRaw = String(header['RFQDeliveryDate'] ?? '');
+
+    return {
+      rfqData: {
+        rfqNumber: String(header['RFQCaseNumber']),
+        rfqStatus: 'SENT',
+        entryDate: deliveryRaw.split('T')[0] ?? '',
+        expirationDate: expiryRaw.split('T')[0] ?? '',
+        customerApprovalStatus: 'OPTIONAL',
+        buyerName: String(header['RequesterName'] ?? ''),
+        buyerPhone: '',
+        buyerEmail: '',
+        companyName: String(header['DeliveryAddressName'] ?? header['dataAreaId'] ?? ''),
+        instructions: String(header['RFQCaseTitle'] ?? `Please provide pricing for RFQ ${rfqNumber}`),
+        items,
+      },
+      vendors,
+    };
+  }
+
+  /**
    * Write a vendor's reply back to D365.
    * Uses RequestForQuotationReplyHeaders and RequestForQuotationReplyLines.
    */

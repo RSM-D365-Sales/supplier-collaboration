@@ -104,6 +104,11 @@ export interface SlotLineItemDraft {
   leadTimeDays: number;
 }
 
+export interface RFQLookupResult {
+  rfqData: Omit<RFQData, 'vendor'>;
+  vendors: Array<{ vendorId: string; vendorName: string }>;
+}
+
 export interface ConfigureSlotPayload {
   label?: string;
   rfqNumber: string;
