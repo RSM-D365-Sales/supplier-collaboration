@@ -16,9 +16,28 @@ const uploadsDir = path.join(__dirname, '../uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
 // ─── Security & Parsing Middleware ────────────────────────────────────────────
+// D365_FRAME_ANCESTORS: space-separated list of origins allowed to embed this
+// portal in an iframe (e.g. your D365 F&O tenant URL).
+// Example .env:  D365_FRAME_ANCESTORS=https://cd1.operations.dynamics.com
+const frameAncestors = process.env.D365_FRAME_ANCESTORS
+  ? `'self' ${process.env.D365_FRAME_ANCESTORS}`
+  : `'self'`;
+
 app.use(
   helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' }, // allow static file serving
+    frameguard: false, // disable X-Frame-Options — controlled via CSP frame-ancestors instead
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],   // Vite bundles need this
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", 'data:', 'blob:'],
+        connectSrc: ["'self'"],
+        frameSrc: ["'none'"],
+        frameAncestors: frameAncestors.split(' '),  // who can embed US in an iframe
+      },
+    },
   })
 );
 app.use(
